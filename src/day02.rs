@@ -34,10 +34,7 @@ fn solution_one(reports: &[Vec<i32>]) -> i32 {
         }
 
         let is_ascending = report[1] > report[0];
-        if report.windows(2).all(|level_pair| {
-            let diff = level_pair[1] - level_pair[0];
-            return (1..=3).contains(&diff.abs()) && (diff > 0) == is_ascending;
-        }) {
+        if is_safe(report, is_ascending) {
             safe_reports += 1;
         }
     }
@@ -45,35 +42,49 @@ fn solution_one(reports: &[Vec<i32>]) -> i32 {
     return safe_reports;
 }
 
+fn is_safe(report: &Vec<i32>, is_ascending: bool) -> bool {
+    return report.windows(2).all(|level_pair| {
+        let diff = level_pair[1] - level_pair[0];
+        return (1..=3).contains(&diff.abs()) && (diff > 0) == is_ascending;
+    });
+}
+
+fn is_safe_tolerance(report: &Vec<i32>, tolerance: usize) -> bool {
+    let mut indexed_arr: Vec<(usize, i32)> =
+        report.iter().enumerate().map(|(i, &v)| (i, v)).collect();
+
+    let is_ascending: bool = report.windows(2).filter(|w| w[1] - w[0] > 0).count() >= tolerance;
+    if is_ascending {
+        indexed_arr.sort_by_key(|&(_, value)| value);
+    } else {
+        indexed_arr.sort_by_key(|&(_, value)| -value);
+    }
+
+    let mut changed_indices: Vec<usize> = indexed_arr
+        .iter()
+        .enumerate()
+        .filter_map(|(new_index, &(original_index, _))| {
+            if new_index != original_index {
+                Some(original_index)
+            } else {
+                None
+            }
+        })
+        .collect();
+    changed_indices.sort_by(|a, b| b.cmp(a));
+
+    let mut report_clone = report.clone();
+    for idx in changed_indices {
+        report_clone.remove(idx);
+    }
+
+    return is_safe(report, is_ascending);
+}
+
 fn solution_two(reports: &[Vec<i32>]) -> i32 {
     let mut safe_reports = 0;
     for report in reports {
-        if report.len() < 2 {
-            continue;
-        }
-
-        let is_ascending = report[1] > report[0];
-
-        let mut idx = 0;
-        let mut comp_idx = 1;
-
-        while comp_idx < report.len() {
-            let diff = report[comp_idx] - report[idx];
-
-            if (1..=3).contains(&diff.abs()) && (diff > 0) == is_ascending {
-                idx += 1;
-                comp_idx += 1;
-                continue;
-            } else {
-                comp_idx += 1;
-            }
-
-            if comp_idx - idx == 3 {
-                break;
-            }
-        }
-
-        if comp_idx - idx < 3 {
+        if is_safe_tolerance(report, 1) {
             safe_reports += 1;
         }
     }
