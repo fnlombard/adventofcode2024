@@ -33,68 +33,45 @@ fn solution_one(reports: &[Vec<i32>]) -> i32 {
             continue;
         }
 
-        let is_ascending = report[1] > report[0];
-        if is_safe(report, is_ascending) {
+        if is_safe(report) {
             safe_reports += 1;
         }
     }
-
     return safe_reports;
 }
 
-fn is_safe(report: &Vec<i32>, is_ascending: bool) -> bool {
-    return report.windows(2).all(|level_pair| {
-        let diff = level_pair[1] - level_pair[0];
-        return (1..=3).contains(&diff.abs()) && (diff > 0) == is_ascending;
-    });
-}
+fn is_safe(report: &Vec<i32>) -> bool {
+    let is_ascending: bool = report.windows(2).all(|w| w[1] - w[0] > 0);
+    let is_descending: bool = report.windows(2).all(|w| w[1] - w[0] < 0);
 
-fn is_safe_tolerance(report: &Vec<i32>, tolerance: usize) -> bool {
-    let mut indexed_arr: Vec<(usize, i32)> =
-        report.iter().enumerate().map(|(i, &v)| (i, v)).collect();
-
-    let is_ascending: bool =
-        report.windows(2).filter(|w| w[1] - w[0] > 0).count() >= report.len() / 2;
-
-    if is_ascending {
-        indexed_arr.sort_by_key(|&(_, value)| value);
-    } else {
-        indexed_arr.sort_by_key(|&(_, value)| -value);
-    }
-
-    let mut changed_indices: Vec<usize> = indexed_arr
-        .iter()
-        .enumerate()
-        .filter_map(|(new_index, &(original_index, _))| {
-            if new_index != original_index {
-                Some(original_index)
-            } else {
-                None
-            }
-        })
-        .collect();
-
-    if changed_indices.len() > tolerance {
+    if !is_ascending && !is_descending {
         return false;
     }
 
-    changed_indices.sort_by(|a, b| b.cmp(a));
+    return report.windows(2).all(|w| {
+        let diff = w[1] - w[0];
+        return (1..=3).contains(&diff.abs());
+    });
+}
 
-    let mut report_clone = report.clone();
-    for idx in changed_indices {
-        report_clone.remove(idx);
+fn is_safe_tolerance(report: &Vec<i32>) -> bool {
+
+    for idx in 0..report.len() {
+        let mut report_copy = report.clone();
+        report_copy.remove(idx);
+        if is_safe(&report_copy) {
+            return true
+        }
     }
-
-    return is_safe(report, is_ascending);
+    return false;
 }
 
 fn solution_two(reports: &[Vec<i32>]) -> i32 {
     let mut safe_reports = 0;
     for report in reports {
-        if is_safe_tolerance(report, 1) {
+        if is_safe_tolerance(report) {
             safe_reports += 1;
         }
     }
-
     return safe_reports;
 }
