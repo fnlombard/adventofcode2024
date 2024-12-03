@@ -53,7 +53,9 @@ fn is_safe_tolerance(report: &Vec<i32>, tolerance: usize) -> bool {
     let mut indexed_arr: Vec<(usize, i32)> =
         report.iter().enumerate().map(|(i, &v)| (i, v)).collect();
 
-    let is_ascending: bool = report.windows(2).filter(|w| w[1] - w[0] > 0).count() >= tolerance;
+    let is_ascending: bool =
+        report.windows(2).filter(|w| w[1] - w[0] > 0).count() >= report.len() / 2;
+
     if is_ascending {
         indexed_arr.sort_by_key(|&(_, value)| value);
     } else {
@@ -71,6 +73,11 @@ fn is_safe_tolerance(report: &Vec<i32>, tolerance: usize) -> bool {
             }
         })
         .collect();
+
+    if changed_indices.len() > tolerance {
+        return false;
+    }
+
     changed_indices.sort_by(|a, b| b.cmp(a));
 
     let mut report_clone = report.clone();
