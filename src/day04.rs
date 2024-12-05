@@ -2,15 +2,24 @@ use regex::Regex;
 use std::fs;
 
 pub fn run() {
-    let word_search = parse_input("src/day04.txt");
+    let grid = parse_input("src/day04.txt");
 
-    let operation_result = solution_one(&word_search);
+    let operation_result = solution_one(&grid);
     println!("Solution 1 operations result: {}", operation_result);
+
+    let operation_result = solution_two(&grid);
+    println!("Solution 2 operations result: {}", operation_result);
 }
 
-fn parse_input(filename: &str) -> String {
+fn parse_input(filename: &str) -> Vec<Vec<char>> {
     let input = fs::read_to_string(filename).expect("Failed to read input file");
     let grid: Vec<Vec<char>> = input.lines().map(|line| line.chars().collect()).collect();
+    return grid;
+}
+
+fn solution_one(grid: &Vec<Vec<char>>) -> usize {
+    let re = Regex::new(r"XMAS").unwrap();
+
     let rows = grid.len();
     let cols = grid[0].len();
 
@@ -45,6 +54,7 @@ fn parse_input(filename: &str) -> String {
 
             col -= 1;
         }
+
         sequences.push(sequence);
     }
 
@@ -72,14 +82,38 @@ fn parse_input(filename: &str) -> String {
         sequences.push(sequence);
     }
 
-    sequences.join(" ")
-}
+    let word_search = sequences.join(" ");
 
-fn solution_one(word_search: &String) -> usize {
-    let re = Regex::new(r"XMAS").unwrap();
-    let normal_count = re.find_iter(word_search).count();
+    let normal_count = re.find_iter(&word_search).count();
     let reverse_count = re
         .find_iter(&word_search.chars().rev().collect::<String>())
         .count();
     return normal_count + reverse_count;
+}
+
+fn solution_two(grid: &Vec<Vec<char>>) -> i32 {
+    let rows: usize = grid.len();
+    let cols: usize = grid[0].len();
+
+    let mut matches: i32 = 0;
+
+    for row in 1..rows - 1 {
+        for col in 1..cols - 1 {
+            if grid[row][col] != 'A' {
+                continue;
+            }
+
+            let d1: (char, char) = (grid[row - 1][col - 1], grid[row + 1][col + 1]);
+            let d2: (char, char) = (grid[row - 1][col + 1], grid[row + 1][col - 1]);
+
+            let d1_match: bool = (d1.0 == 'M' && d1.1 == 'S') || (d1.0 == 'S' && d1.1 == 'M');
+            let d2_match: bool = (d2.0 == 'M' && d2.1 == 'S') || (d2.0 == 'S' && d2.1 == 'M');
+
+            if d1_match && d2_match {
+                matches += 1;
+            }
+        }
+    }
+
+    matches
 }
